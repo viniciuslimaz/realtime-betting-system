@@ -8,7 +8,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Integração com a API do Cassino (Mock)
-const CASSINO_API = 'http://localhost:4000';
+//const CASSINO_API = 'http://localhost:4000';
+// Usa a variável de ambiente se existir, senão usa localhost (para testes locais)
+const CASSINO_API = process.env.CASSINO_API_URL || 'http://localhost:4000';
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
