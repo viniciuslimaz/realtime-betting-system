@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trader Crash - Mobile Pro</title>
+    <title>Trader Crash - Mobile Fix</title>
     <style>
         /* --- CSS GERAL --- */
-        body { background-color: #0d1117; color: #e6edf3; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100vh; display: grid; grid-template-rows: 50px 1fr; }
+        /* height: 100dvh garante o tamanho certo no mobile ignorando a barra de endereço */
+        body { background-color: #0d1117; color: #e6edf3; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
         
-        /* TOPO */
-        #top-bar { background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; padding: 0 10px; overflow-x: auto; gap: 8px; z-index: 30; height: 50px; }
+        /* TOPO (FIXO) */
+        #top-bar { background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; padding: 0 10px; overflow-x: auto; gap: 8px; z-index: 30; height: 50px; flex: 0 0 50px; }
         .badge-history { padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12px; min-width: 35px; text-align: center; white-space: nowrap; cursor: pointer; transition: transform 0.2s; }
         
         .history-blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid #3b82f6; }
@@ -17,10 +18,10 @@
         .history-green-neon { background: rgba(0, 255, 127, 0.2); color: #00ff7f; border: 1px solid #00ff7f; box-shadow: 0 0 10px rgba(0, 255, 127, 0.6); font-weight: 900; }
 
         /* LAYOUT PRINCIPAL */
-        #main-area { display: grid; grid-template-columns: 250px 1fr; height: 100%; overflow: hidden; }
+        #main-area { display: flex; flex: 1; overflow: hidden; height: 100%; }
         
-        /* SIDEBAR (PC) */
-        #sidebar { background: #21262d; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 25; }
+        /* SIDEBAR (Desktop) */
+        #sidebar { width: 250px; background: #21262d; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 25; }
         .sidebar-header { padding: 10px; border-bottom: 1px solid #30363d; font-weight: bold; color: #8b949e; display: flex; justify-content: space-between; font-size: 12px; }
         #lista-jogadores { overflow-y: auto; flex: 1; padding: 5px; }
         .player-row { display: flex; justify-content: space-between; padding: 6px; border-bottom: 1px solid #30363d; font-size: 12px; animation: fadeIn 0.3s; }
@@ -28,12 +29,25 @@
         .green-text { color: #00ff7f; font-weight: bold; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ÁREA DO JOGO */
-        #game-wrapper { position: relative; display: flex; flex-direction: column; background: #0d1117; height: 100%; overflow: hidden; }
+        /* ÁREA DO JOGO (FLEX COLUMN) */
+        #game-wrapper { 
+            flex: 1; /* Ocupa todo o resto da largura */
+            display: flex; 
+            flex-direction: column; /* Empilha: UserBar -> Canvas -> Controles */
+            background: #0d1117; 
+            height: 100%; 
+            position: relative;
+            overflow: hidden; 
+        }
         #ambient-glow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,255,127,0) 0%, rgba(0,255,127,0) 50%); pointer-events: none; z-index: 1; transition: background 0.1s; }
         
         /* CANVAS FLEXÍVEL */
-        #canvas-container { flex: 1; position: relative; width: 100%; min-height: 150px; } /* Garante altura mínima pro gráfico */
+        #canvas-container { 
+            flex: 1; /* Ocupa TODO o espaço vertical disponível */
+            position: relative; 
+            width: 100%; 
+            min-height: 0; /* IMPORTANTE: Permite encolher se necessário */
+        }
         canvas { display: block; width: 100%; height: 100%; }
         
         #overlay-numero { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; font-weight: 900; color: rgba(255, 255, 255, 0.2); pointer-events: none; z-index: 10; transition: transform 0.1s, text-shadow 0.1s, color 0.1s; white-space: nowrap; }
@@ -41,12 +55,18 @@
         #fairness-bar { position: absolute; top: 10px; left: 10px; font-size: 10px; color: #484f58; display: flex; align-items: center; gap: 5px; z-index: 40; cursor: pointer; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; border: 1px solid #30363d; }
         #user-bar { position: absolute; top: 10px; right: 10px; background: rgba(22, 27, 34, 0.8); padding: 4px 10px; border-radius: 15px; border: 1px solid #30363d; z-index: 30; font-size: 12px; font-weight: bold; }
 
-        /* --- CONTROLES DE APOSTA --- */
+        /* --- CONTROLES DE APOSTA (RODAPÉ FIXO) --- */
         #bet-controls-container { 
-            width: 100%; background: #161b22; border-top: 1px solid #30363d; 
-            padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
-            box-sizing: border-box; z-index: 20; 
-            /* Altura fixa ou auto dependendo do conteúdo */
+            flex: 0 0 auto; /* NÃO ENCOLHE, NÃO CRESCE. Fica fixo no tamanho do conteúdo */
+            width: 100%; 
+            background: #161b22; 
+            border-top: 1px solid #30363d; 
+            padding: 10px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            box-sizing: border-box; 
+            z-index: 20; 
         }
 
         .bet-panel { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
@@ -79,7 +99,7 @@
         .btn-bloqueado { background-color: #30363d; color: #6e7681; cursor: not-allowed; }
         @keyframes pulsar { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 15px #d29922; } 100% { transform: scale(1); } }
 
-        /* --- MODAL MOBILE FRIENDLY --- */
+        /* MODAL */
         #modal-fairness { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .modal-content { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 95%; max-width: 600px; padding: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.8); font-family: 'Consolas', monospace; position: relative; max-height: 90vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
@@ -87,33 +107,19 @@
         .fair-section { margin-bottom: 15px; background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d; }
         .fair-value { word-break: break-all; color: #e6edf3; font-size: 11px; }
 
-        /* --- MEDIA QUERIES (O SEGREDO DO MOBILE) --- */
+        /* --- MOBILE TWEAKS --- */
         @media (max-width: 800px) {
-            /* 1. Muda layout geral para Coluna */
-            #main-area { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } 
+            #sidebar { display: none; } /* Esconde sidebar */
             
-            /* 2. Sidebar vai para baixo ou some (vamos esconder para focar no jogo) */
-            /* Se quiser mostrar, coloque height: 200px. Aqui vou esconder para ganhar espaço */
-            #sidebar { display: none; } 
-
-            /* 3. Área de Jogo ocupa tudo */
-            #game-wrapper { order: 1; height: 100%; }
-
-            /* 4. Painel de Apostas: Fica um embaixo do outro se a tela for muito estreita */
             #bet-controls-container {
-                display: flex; /* Muda de Grid para Flex Coluna */
-                flex-direction: column;
-                gap: 10px;
-                padding-bottom: 20px; /* Espaço pro dedo */
-                max-height: 40vh; /* Limita altura */
-                overflow-y: auto; /* Permite rolar se o celular for minúsculo */
+                display: flex;
+                flex-direction: column; /* Um embaixo do outro */
+                padding-bottom: 15px; /* Espaço extra pro dedo */
+                max-height: 45vh; /* Garante que não ocupe a tela toda se bugar */
+                overflow-y: auto;
             }
-
-            .bet-panel { padding: 10px; }
-            .action-btn { width: 100px; }
-            
-            /* Ajuste de Texto */
-            #overlay-numero { font-size: 15vw; } /* Tamanho responsivo */
+            .bet-panel { padding: 8px; }
+            #overlay-numero { font-size: 40px; } /* Texto menor para não estourar */
         }
     </style>
 </head>
@@ -312,7 +318,7 @@
 
         // LISTA SIDEBAR (Só atualiza se visível)
         socket.on('lista_apostas', l => {
-            if(window.innerWidth > 800) { // Otimização: Não renderiza lista no mobile
+            if(window.innerWidth > 800) { 
                 const list = document.getElementById('lista-jogadores');
                 list.innerHTML = '';
                 document.getElementById('total-players').innerText = l.length;
@@ -356,7 +362,6 @@
             elOverlay.innerText = v + "x";
             p1.update(multiplicadorAtual); p2.update(multiplicadorAtual);
             
-            // Efeitos
             if(multiplicadorAtual > 1.5) {
                 elOverlay.style.color = "#00ff7f";
                 let scale = 1 + Math.min((multiplicadorAtual-1)/10, 0.5);
@@ -380,8 +385,7 @@
         window.addEventListener('resize', resize);
         
         function desenhar() {
-            // Garante tamanho correto
-            if(width !== canvasContainer.clientWidth) resize();
+            if(width !== canvasContainer.clientWidth || height !== canvasContainer.clientHeight) resize();
             
             ctx.clearRect(0,0,width,height);
             // Grid
@@ -391,7 +395,7 @@
             ctx.stroke();
 
             if((faseAtual==='VOANDO'||faseAtual==='CRASH') && historicoPontos.length>0) {
-                let escalaX = width < 500 ? 2 : 5; // Mobile tem menos espaço
+                let escalaX = width < 500 ? 2 : 5; 
                 let offsetX = 0;
                 let pontaX = (historicoPontos.length-1)*escalaX;
                 if(pontaX > width*0.6) offsetX = pontaX - (width*0.6);
@@ -403,7 +407,7 @@
                 let start=true;
                 for(let i=0; i<historicoPontos.length; i++) {
                     let x = (i*escalaX) - offsetX;
-                    let y = height - ((historicoPontos[i]-1)*30) - 20; // 30px por 1x
+                    let y = height - ((historicoPontos[i]-1)*30) - 20; 
                     if(y<20) y=20;
                     
                     if(x>-10 && x<width+10) {
