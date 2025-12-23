@@ -16,6 +16,11 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+// Rota para abrir o Painel Admin
+app.get('/admin', (req, res) => {
+    res.sendFile(__dirname + '/admin.html');
+});
+
 // --- ESTADO GLOBAL DO JOGO ---
 let estadoJogo = { 
     fase: 'APOSTAS', // Fases: APOSTAS, VOANDO, CRASH

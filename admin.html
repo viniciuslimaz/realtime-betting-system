@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Trader Crash</title>
+    <style>
+        body { background-color: #0d1117; color: #e6edf3; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; }
+        h1 { color: #58a6ff; }
+        .card-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+        .card { background: #161b22; border: 1px solid #30363d; padding: 30px; border-radius: 8px; width: 200px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .number { font-size: 40px; font-weight: bold; margin: 10px 0; display: block; }
+        .green { color: #238636; }
+        .yellow { color: #d29922; }
+        button { background: #238636; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 20px; }
+        input { padding: 10px; border-radius: 5px; border: 1px solid #30363d; background: #0d1117; color: white; width: 300px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h1>🔐 Backoffice da Banca</h1>
+    
+    <div style="margin-bottom: 20px;">
+        <p>Cole a URL da sua API de Banco aqui:</p>
+        <input type="text" id="api-url" placeholder="https://api-do-banco.onrender.com">
+    </div>
+    
+    <button onclick="carregarDados()">ATUALIZAR DADOS</button>
+
+    <div class="card-container" id="painel" style="opacity: 0.5;">
+        <div class="card">
+            <span>JOGADORES</span>
+            <span class="number yellow" id="num-users">---</span>
+            <span>Cadastrados</span>
+        </div>
+
+        <div class="card">
+            <span>DINHEIRO EM JOGO</span>
+            <span class="number green" id="num-money">---</span>
+            <span>Liability (R$)</span>
+        </div>
+    </div>
+
+    <script>
+        async function carregarDados() {
+            const urlBase = document.getElementById('api-url').value;
+            if (!urlBase) return alert("Coloque a URL da API do Banco!");
+
+            // Limpa a barra final se tiver
+            const cleanUrl = urlBase.endsWith('/') ? urlBase.slice(0, -1) : urlBase;
+
+            try {
+                // Chama a rota secreta com a senha
+                const res = await fetch(`${cleanUrl}/stats?token=admin123`);
+                
+                if (res.status === 403) return alert("Senha incorreta no código!");
+                
+                const dados = await res.json();
+
+                document.getElementById('num-users').innerText = dados.usuarios;
+                document.getElementById('num-money').innerText = `R$ ${dados.dinheiro_em_jogo.toFixed(2)}`;
+                document.getElementById('painel').style.opacity = "1";
+
+            } catch (erro) {
+                alert("Erro ao conectar! Verifique a URL.");
+                console.error(erro);
+            }
+        }
+    </script>
+</body>
+</html>

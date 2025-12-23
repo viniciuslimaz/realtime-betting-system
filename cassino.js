@@ -95,6 +95,32 @@ app.post('/win', async (req, res) => {
 
 // Inicialização
 const PORT = process.env.PORT || 4000;
+// --- ROTA DO PAINEL ADMIN (NOVO) ---
+app.get('/stats', async (req, res) => {
+    const { token } = req.query;
+
+    // Senha simples de proteção
+    if (token !== 'admin123') {
+        return res.status(403).json({ erro: "Acesso Negado. Saia daqui!" });
+    }
+
+    try {
+        // Busca: Total de Usuários e Soma de todos os Saldos
+        const resultado = await pool.query("SELECT COUNT(*) as total_users, SUM(saldo) as total_money FROM contas");
+        
+        const dados = resultado.rows[0];
+        
+        // Postgres retorna números grandes como String, precisamos converter
+        res.json({
+            usuarios: parseInt(dados.total_users),
+            dinheiro_em_jogo: parseFloat(dados.total_money || 0) // Se for null, retorna 0
+        });
+
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ erro: "Erro ao buscar estatísticas" });
+    }
+});
 app.listen(PORT, () => {
     console.log(`🏦 API DO CASSINO (Postgres) RODANDO NA PORTA ${PORT}`);
 });
