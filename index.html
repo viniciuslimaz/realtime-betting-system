@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trader Crash - Hybrid Edition</title>
+    <title>Trader Crash - Pro Edition</title>
     <style>
         /* --- ESTILOS GERAIS --- */
         body {
@@ -28,7 +28,7 @@
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 6px 6px 0 0;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 30px rgba(0, 255, 127, 0.1); /* Leve brilho verde no container */
         }
 
         /* Ajuste para telas muito curtas na vertical */
@@ -53,6 +53,7 @@
             color: rgba(255, 255, 255, 0.1);
             pointer-events: none;
             z-index: 10;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         /* --- PAINEL DE CONTROLE --- */
@@ -69,7 +70,7 @@
         }
 
         .info-box { font-size: 14px; color: #8b949e; white-space: nowrap; }
-        .valor-destaque { color: #58a6ff; font-weight: bold; font-size: 18px; }
+        .valor-destaque { color: #00ff7f; font-weight: bold; font-size: 18px; text-shadow: 0 0 10px rgba(0, 255, 127, 0.3); }
         
         input {
             background: #0d1117;
@@ -92,13 +93,18 @@
             cursor: pointer;
             transition: 0.2s;
             text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
         }
 
         .btn-apostar { background-color: #238636; color: white; }
-        .btn-sacar { background-color: #d29922; color: black; animation: pulsar 0.5s infinite alternate; }
-        .btn-bloqueado { background-color: #30363d; color: #6e7681; cursor: not-allowed; }
+        .btn-apostar:hover { background-color: #2ea043; box-shadow: 0 0 20px rgba(46, 160, 67, 0.4); }
         
-        @keyframes pulsar { from { transform: scale(1); } to { transform: scale(1.05); } }
+        .btn-sacar { background-color: #d29922; color: black; animation: pulsar 0.5s infinite alternate; }
+        .btn-sacar:hover { background-color: #e3b341; box-shadow: 0 0 20px rgba(210, 153, 34, 0.4); }
+
+        .btn-bloqueado { background-color: #30363d; color: #6e7681; cursor: not-allowed; box-shadow: none; }
+        
+        @keyframes pulsar { from { transform: scale(1); box-shadow: 0 0 10px rgba(210, 153, 34, 0.5); } to { transform: scale(1.05); box-shadow: 0 0 25px rgba(210, 153, 34, 0.8); } }
 
         /* --- RESPONSIVIDADE MOBILE (< 600px) --- */
         @media (max-width: 600px) {
@@ -147,7 +153,7 @@
     <script>
         // --- INICIALIZAÇÃO E LOGIN ---
         let username = prompt("Digite seu nome de usuário para entrar:");
-        if (!username) username = "Visitante_" + Math.floor(Math.random() * 1000);
+        if (!username) username = "Trader_" + Math.floor(Math.random() * 1000);
         document.getElementById('nome-usuario').innerText = username;
 
         const socket = io();
@@ -180,7 +186,8 @@
 
         function desenharGrid() {
             ctx.fillStyle = "#161b22"; ctx.fillRect(0, 0, width, height);
-            ctx.strokeStyle = "#30363d"; ctx.lineWidth = 0.5;
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = "rgba(48, 54, 61, 0.5)"; // Grid mais sutil
             
             // Grid adaptativo para telas pequenas
             const espacamento = width < 500 ? 40 : 50;
@@ -189,22 +196,51 @@
             for (let i = 0; i < width; i += espacamento) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
         }
 
+        // --- NOVA FUNÇÃO DE DESENHO (ESTILO NEON TRADER) ---
         function desenhar() {
+            // Limpa o efeito neon antes de desenhar o grid
+            ctx.shadowBlur = 0;
             desenharGrid();
+
             if (faseAtual === 'VOANDO' || faseAtual === 'CRASH') {
-                ctx.beginPath(); ctx.lineWidth = 4; ctx.lineCap = "round";
-                ctx.strokeStyle = (faseAtual === 'CRASH') ? "#da3633" : "#238636";
+                ctx.beginPath(); 
+                ctx.lineWidth = 5; // Linha mais grossa
+                ctx.lineCap = "round";
+                
+                // --- EFEITO NEON ---
+                // Cor principal: Verde limão se voando, Vermelho se crash
+                const corPrincipal = (faseAtual === 'CRASH') ? "#ff3838" : "#00ff7f";
+                
+                ctx.strokeStyle = corPrincipal;
+                ctx.shadowColor = corPrincipal; // A sombra é da mesma cor da linha
+                ctx.shadowBlur = 20; // O quanto a linha "brilha"
+
+                let lastX = 0, lastY = height;
+
                 if (historicoPontos.length > 0) {
                     ctx.moveTo(0, height);
                     for (let i = 0; i < historicoPontos.length; i++) {
-                        // Escala adaptativa para telas pequenas
-                        let escalaX = width < 500 ? 1.5 : 2;
+                        let escalaX = width < 500 ? 1.5 : 2.5;
                         let x = i * escalaX; 
                         let y = height - ((historicoPontos[i] - 1) * 50); 
                         if (y < 20) y = 20;
                         ctx.lineTo(x, y);
+
+                        if (i === historicoPontos.length - 1) {
+                            lastX = x;
+                            lastY = y;
+                        }
                     }
-                    ctx.stroke();
+                    ctx.stroke(); 
+
+                    // --- BOLINHA BRILHANTE NA PONTA (PULSO DO MERCADO) ---
+                    if (faseAtual === 'VOANDO') {
+                        ctx.beginPath();
+                        ctx.fillStyle = "#ffffff"; // Miolo branco para destacar
+                        ctx.shadowBlur = 30; // Bolinha brilha mais ainda
+                        ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 }
             }
             requestAnimationFrame(desenhar);
@@ -270,7 +306,8 @@
             elSaldo.innerText = saldo.toFixed(2);
             jogando = false;
             elStatus.innerText = `LUCRO: R$ ${dados.ganho.toFixed(2)}`;
-            elStatus.style.color = "#0f0";
+            elStatus.style.color = "#00ff7f"; // Verde neon
+            elStatus.style.textShadow = "0 0 10px rgba(0, 255, 127, 0.5)";
         });
 
         socket.on('fase', (fase) => {
@@ -281,6 +318,7 @@
                 elOverlay.innerText = "";
                 elStatus.innerText = "Apostas Abertas";
                 elStatus.style.color = "white";
+                elStatus.style.textShadow = "none";
                 if (jogando) jogando = false;
                 btn.className = "btn-apostar";
                 btn.innerText = "APOSTAR";
@@ -292,13 +330,14 @@
                 } else {
                     btn.className = "btn-bloqueado";
                     btn.innerText = "EM JOGO";
-                    elStatus.innerText = "Apostas Encerradas";
+                    elStatus.innerText = "Mercado em Alta...";
                     elStatus.style.color = "#8b949e";
                 }
             } 
             else if (fase === 'CRASH') {
                 elStatus.innerText = "MERCADO QUEBROU!";
-                elStatus.style.color = "red";
+                elStatus.style.color = "#ff3838"; // Vermelho neon
+                elStatus.style.textShadow = "0 0 10px rgba(255, 56, 56, 0.5)";
                 btn.className = "btn-bloqueado";
                 btn.innerText = "CRASH";
             }
@@ -308,7 +347,8 @@
             multiplicadorAtual = parseFloat(valor);
             historicoPontos.push(multiplicadorAtual);
             elOverlay.innerText = valor + "x";
-            elOverlay.style.color = "white";
+            elOverlay.style.color = "#00ff7f"; // Verde neon
+            elOverlay.style.textShadow = "0 0 20px rgba(0, 255, 127, 0.5)";
             if (jogando && !jaSacou) {
                 const ganho = (minhaAposta * multiplicadorAtual).toFixed(2);
                 btn.innerText = `SACAR R$ ${ganho}`;
@@ -318,18 +358,20 @@
         socket.on('crash', (valor) => {
             multiplicadorAtual = valor;
             elOverlay.innerText = valor + "x";
-            elOverlay.style.color = "#da3633";
+            elOverlay.style.color = "#ff3838"; // Vermelho neon
+            elOverlay.style.textShadow = "0 0 20px rgba(255, 56, 56, 0.5)";
         });
 
         socket.on('tempo', (t) => {
             elOverlay.innerText = `Início em ${t}s`;
             elOverlay.style.color = "#8b949e";
+            elOverlay.style.textShadow = "none";
         });
 
         socket.on('erro_aposta', (msg) => {
             elStatus.innerText = msg;
-            elStatus.style.color = "#ff4444";
-            inputAposta.style.border = "2px solid red";
+            elStatus.style.color = "#ff3838";
+            inputAposta.style.border = "2px solid #ff3838";
             setTimeout(() => { inputAposta.style.border = "1px solid #30363d"; }, 500);
             jogando = false; 
             btn.className = "btn-apostar";
